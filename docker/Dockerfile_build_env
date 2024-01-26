@@ -1,0 +1,33 @@
+FROM centos:7
+
+LABEL maintainer="liuchengyu@360.cn"
+
+ENV PIKA_DIR=/pika
+
+# yum makecache and update
+RUN yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm && \
+    yum -y install https://packages.endpointdev.com/rhel/7/os/x86_64/endpoint-repo.x86_64.rpm && \
+        yum -y install deltarpm wget jq && \
+        yum -y group install "Development Tools" && \
+        yum makecache && yum -y update
+
+# install cmake3 
+RUN yum -y install openssl openssl-devel
+RUN git clone -b v3.18.4 https://gitee.com/mirrors/CMake.git && \
+    cd CMake && ./bootstrap && make -j4 && make install && cd .. && rm -rf CMake
+
+# install gcc9 
+RUN yum install -y centos-release-scl  && \
+            yum install -y devtoolset-9-gcc devtoolset-9-gcc-c++ && \
+            source /opt/rh/devtoolset-9/enable && \
+            ln -s /opt/rh/devtoolset-9/root/usr/bin/* /usr/local/bin/ && \
+            echo "source /opt/rh/devtoolset-9/enable" >>/etc/profile
+
+RUN yum install -y golang redis && mkdir -p /pika/log /pika/db /pika/dump /pika/dbsync
+ENV GO111MODULE=on
+ENV GOPROXY=https://goproxy.cn
+ENV GOPATH=/go
+
+COPY ./conf/pika.conf /
+
+WORKDIR ${PIKA_DIR}

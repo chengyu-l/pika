@@ -1,0 +1,40 @@
+version: "3.7"
+
+networks:
+  extnetwork:
+    ipam:
+      config:
+        - subnet: 192.168.0.0/16
+
+x-variables:
+  pika_server_common_settings: &pika_server_common_settings
+    image: pika/pika_build:v0.1
+    privileged: true
+    environment:
+      - TZ=Asia/Shanghai
+    command: /pika/output/pika -c /pika.conf
+    ports:
+      - 9221
+      - 10221 # 9221 + 1000
+      - 11221 # 9221 + 2000
+      - 19222 # 9221 + 10001
+
+services:
+  pika_server5:
+    <<: *pika_server_common_settings
+    hostname: 192.168.1.5
+    container_name: pika_server5
+    volumes:
+      - ../output:/pika/output:ro
+    networks:
+      extnetwork:
+        ipv4_address: 192.168.1.5
+  pika_server6:
+    <<: *pika_server_common_settings
+    hostname: 192.168.1.6
+    container_name: pika_server6
+    volumes:
+      - ../output:/pika/output:ro
+    networks:
+      extnetwork:
+        ipv4_address: 192.168.1.6
